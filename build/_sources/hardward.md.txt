@@ -1,0 +1,9 @@
+# Hardware
+
+Required hardware:
+1. IR sensor
+2. IMU (BNO550)
+3. Nuclear LG725 STM-32
+4. Motors (2X)
+5. Romi Chassis
+ 

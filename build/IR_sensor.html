@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IR Sensor Driver &mdash; ME 405 Line-Following Robot 3/10/25 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dba797f5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Controller Class" href="controller.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ME 405 Line-Following Robot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="romi_design.html">Romi Design</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="software_overview.html">Software Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller_design.html">Controller Design</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="motor.html">Motor Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="encoder.html">Encoder Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collector.html">Collector Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller.html">Controller Class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IR Sensor Driver</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ME 405 Line-Following Robot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">IR Sensor Driver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/IR_sensor.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ir-sensor-driver">
+<h1>IR Sensor Driver<a class="headerlink" href="#ir-sensor-driver" title="Link to this heading"></a></h1>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>IR sensor driver 
+by Kai De La Cruz &amp; Kenzie Goldman 2/17/25
+
+from pyb import Pin, Timer, ADC import time
+
+class QTR_HD_15A: 
+    def __init__(self, adc_pins, num_sensors, power_odd, power_even): 
+    &quot;&quot;&quot;Initialize the QTR-HD-15A reflectance sensor array.
+    :param adc_pins: List of ADC-capable pin names (e.g., \[&#39;X1&#39;, &#39;X2&#39;,
+    ...\]) :param num_sensors: Number of sensors in the array (default
+    15).&quot;&quot;&quot; 
+        if len(adc_pins) != num_sensors: 
+            raise ValueError(&quot;Number of ADC pins must match the number of sensors&quot;)
+
+        self.num_sensors = num_sensors
+        self.adc_pins = adc_pins
+        self.adc_channels = [ADC(Pin(pin)) for pin in adc_pins]
+        self.enabled = False
+        self.power_odd = Pin(power_odd, Pin.OUT_PP) # Power pin for odd sensors
+        self.power_even = Pin(power_even, Pin.OUT_PP)  # Power pin for even sensors
+        self.calibrated_min = [4095] * num_sensors  # Assuming 12-bit ADC
+        self.calibrated_max = [0] * num_sensors
+        self.disable  # Sensor is initially disabled
+
+    def enable(self):
+        &quot;&quot;&quot;Enable the sensor.&quot;&quot;&quot;
+        self.power_odd.high()
+        self.power_even.high()  # Turn on power to the sensors
+        self.enabled = True
+
+    def disable(self):
+        &quot;&quot;&quot;Disable the sensor.&quot;&quot;&quot;
+        self.power_odd.low()
+        self.power_even.low()  # Turn off power to the sensors
+        self.enabled = False
+
+    def read_raw(self):
+        &quot;&quot;&quot;Read raw values from the sensor array.
+        :return: List of raw ADC values.&quot;&quot;&quot;
+        if not self.enabled:
+            print(&quot;Sensor is disabled. Cannot read raw values.&quot;)
+            return [0] * self.num_sensors
+
+        values = [adc.read() for adc in self.adc_channels]
+        return values
+
+    def calibrate_light(self, num_samples=100):
+        &quot;&quot;&quot;Calibrate the sensor by finding min/max values over multiple samples.
+        :param num_samples: Number of calibration cycles.&quot;&quot;&quot;
+        if not self.enabled:
+            print(&quot;Sensor is disabled. Cannot calibrate.&quot;)
+            return
+
+        print(&quot;Starting calibration light...&quot;)
+        time.sleep_ms(3000)
+        for _ in range(num_samples):
+            values = self.read_raw()
+            for i in range(self.num_sensors):
+                if values[i] &lt; self.calibrated_min[i]:
+                    self.calibrated_min[i] = values[i]
+                if values[i] &gt; self.calibrated_max[i]:
+                    self.calibrated_max[i] = values[i]
+            time.sleep_ms(10)
+        print(&quot;Calibration light complete.&quot;)
+
+    def calibrate_dark(self, num_samples=100):
+        &quot;&quot;&quot;Calibrate the sensor by finding min/max values over multiple samples for a dark 
+        background.
+        :param num_samples: Number of calibration cycles.&quot;&quot;&quot;
+        if not self.enabled:
+            print(&quot;Sensor is disabled. Cannot calibrate.&quot;)
+            return
+
+        print(&quot;Starting calibration dark...&quot;)
+        time.sleep_ms(3000)
+        for _ in range(num_samples):
+            values = self.read_raw()
+            for i in range(self.num_sensors):
+                if values[i] &lt; self.calibrated_min[i]:
+                    self.calibrated_min[i] = values[i]
+                if values[i] &gt; self.calibrated_max[i]:
+                    self.calibrated_max[i] = values[i]
+            time.sleep_ms(10)
+        self.min_value = min(values)
+        self.max_value = max(values)
+        self.ave_value = sum(values) / len(values)
+        print(&quot;Calibration dark complete.&quot;)
+
+    def return_dark(self, num_samples=100):
+
+        return self.min_value, self.max_value, self.ave_value   
+
+    def save_calibration(self, file):
+        &quot;&quot;&quot;Save calibration data to a simple text file.&quot;&quot;&quot;
+        try:
+            with open(file, &quot;w&quot;) as f:
+                for i in range(self.num_sensors):
+                    f.write(f&quot;{self.calibrated_min[i]} {self.calibrated_max[i]}\n&quot;)
+            print(&quot;Calibration data saved.&quot;)
+        except Exception as e:
+            print(&quot;Error saving calibration:&quot;, e)
+
+    def load_calibration(self, file):
+        &quot;&quot;&quot;Load calibration data from the text file if it exists.&quot;&quot;&quot;
+        try:
+            with open(file, &quot;r&quot;) as f:
+                lines = f.readlines()
+                if len(lines) == self.num_sensors:
+                    for i, line in enumerate(lines):
+                        min_val, max_val = map(int, line.strip().split())
+                        self.calibrated_min[i] = min_val
+                        self.calibrated_max[i] = max_val
+                    print(&quot;Calibration data loaded.&quot;)
+                    return min_val, max_val
+                else:
+                    print(&quot;Calibration file invalid, using default values.&quot;)
+        except OSError:
+            print(&quot;No calibration file found, using default values.&quot;)
+        except Exception as e:
+            print(&quot;Error loading calibration:&quot;, e)
+
+    def read_calibrated(self):
+        if not self.enabled:
+            print(&quot;Sensor is disabled. Cannot read calibrated values.&quot;)
+            return [0] * self.num_sensors
+
+        raw_values = self.read_raw()
+        calibrated_values = []
+        for i in range(self.num_sensors):
+            min_val = self.calibrated_min[i]
+            max_val = self.calibrated_max[i]
+            if max_val - min_val == 0:
+                calibrated_values.append(0)
+            else:
+                scaled_value = (raw_values[i] - min_val) * 1000 // (max_val - min_val)
+                calibrated_values.append(max(0, min(1000, scaled_value)))
+
+        return calibrated_values
+
+    def read_line_position(self):
+        &quot;&quot;&quot;Determine the position of the line (weighted average of sensor indices).
+        :return: Line position as a float (0 to num_sensors - 1).&quot;&quot;&quot;
+        if not self.enabled:
+            print(&quot;Sensor is disabled. Cannot read line position.&quot;)
+            return (self.num_sensors - 1) / 2  # Default to center if sensor is disabled
+
+        calibrated_values = self.read_calibrated()
+        weighted_sum = 0
+        sum_values = 0
+
+        for i in range(self.num_sensors):
+            weighted_sum += calibrated_values[i] * i
+            sum_values += calibrated_values[i]
+
+        if sum_values == 0:
+            return (self.num_sensors - 1) / 2  # Default to center if no line is detected
+
+        return weighted_sum / sum_values
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="controller.html" class="btn btn-neutral float-left" title="Controller Class" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kai De La Cruz and Kenzie Goldman.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script> 
+
+</body>
+</html>

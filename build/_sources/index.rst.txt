@@ -1,0 +1,17 @@
+ME 405 Line-Following Robot 
+===========================
+
+Welcome to our ME 405 Line-Following Robot project! 
+This project is a culmination of the skills we have learned in the ME 405 class at Cal Poly. 
+The goal of this project is to create a robot that can follow a line on the ground using IR 
+sensor and IMU for control. The robot will be able to follow a line on the ground and navigate 
+through a series of obstacles.
+
+.. :doc:`Introduction <introduction>`
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   introduction
+   

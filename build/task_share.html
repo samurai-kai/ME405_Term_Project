@@ -1,0 +1,599 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Share &mdash; ME 405 Line-Following Robot 3/10/25 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dba797f5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Cotask" href="cotask.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ME 405 Line-Following Robot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="romi_design.html">Romi Design</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="software_overview.html">Software Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller_design.html">Controller Design</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="motor.html">Motor Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="encoder.html">Encoder Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collector.html">Collector Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller.html">Controller Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IR_sensor.html">IR Sensor Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imu.html">IMU Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cotask.html">Cotask</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Task Share</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ME 405 Line-Following Robot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Task Share</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/task_share.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="task-share">
+<h1>Task Share<a class="headerlink" href="#task-share" title="Link to this heading"></a></h1>
+<p><em>This file is adapted from Dr. John Ridgely, Cal Poly SLO Mechanical Engineering</em></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># @file task_share.py
+
+# This file contains classes which allow tasks to share data without the risk
+
+# of data corruption by interrupts.
+
+# 
+
+# @author JR Ridgely
+
+# @date 2017-Jan-01 JRR Approximate date of creation of file
+
+# @date 2021-Dec-18 JRR Docstrings changed to work without DoxyPyPy
+
+# @copyright This program is copyright (c) 2017-2023 by JR Ridgely and released
+
+# under the GNU Public License, version 3.0.
+
+# 
+
+# It is intended for educational use only, but its use is not limited thereto.
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+
+# POSSIBILITY OF SUCH DAMAGE.
+
+import array import gc import pyb import micropython
+
+## This is a system-wide list of all the queues and shared variables. It is
+
+# used to create diagnostic printouts.
+
+share_list = \[\]
+
+## This dictionary allows readable printouts of queue and share data types.
+
+type_code_strings = {&#39;b&#39; : &quot;int8&quot;, &#39;B&#39; : &quot;uint8&quot;, &#39;h&#39; : &quot;int16&quot;, &#39;H&#39; :
+&quot;uint16&quot;, &#39;i&#39; : &quot;int(?)&quot;, &#39;I&#39; : &quot;uint(?)&quot;, &#39;l&#39; : &quot;int32&quot;, &#39;L&#39; :
+&quot;uint32&quot;, &#39;q&#39; : &quot;int64&quot;, &#39;Q&#39; : &quot;uint64&quot;, &#39;f&#39; : &quot;float&quot;, &#39;d&#39; : &quot;double&quot;}
+
+## Create a string holding a diagnostic printout showing the status of
+
+# each queue and share in the system.
+
+# @return A string containing information about each queue and share
+
+def show_all (): gen = (str (item) for item in share_list) return
+&#39;`\n`{=tex}&#39;.join (gen)
+
+## Base class for queues and shares which exchange data between tasks.
+
+# 
+
+# One should never create an object from this class; it doesn&#39;t do anything
+
+# useful. It exists to implement things which are common between its child
+
+# classes @c Queue and @c Share.
+
+class BaseShare:
+
+    ## Create a base queue object when called by a child class initializer.
+    #
+    #  This method creates the things which queues and shares have in common.
+    def __init__ (self, type_code, thread_protect = True, name = None):
+        self._type_code = type_code
+        self._thread_protect = thread_protect
+
+        # Add this queue to the global share and queue list
+        share_list.append (self)
+
+## A queue which is used to transfer data from one task to another.
+
+# 
+
+# If parameter &#39;thread_protect&#39; is @c True when a queue is created, transfers
+
+# of data will be protected from corruption in the case that one task might
+
+# interrupt another due to use in a pre-emptive multithreading environment or
+
+# due to one task being run as an interrupt service routine.
+
+# 
+
+# An example of the creation and use of a queue is as follows:
+
+# 
+
+# @code
+
+# import task_share
+
+# 
+
+# \# This queue holds unsigned short (16-bit) integers
+
+# my_queue = task_share.Queue (&#39;H&#39;, 100, name=&quot;My Queue&quot;)
+
+# 
+
+# \# Somewhere in one task, put data into the queue
+
+# my_queue.put (some_data)
+
+# 
+
+# \# In another task, read data from the queue
+
+# something = my_queue.get ()
+
+# @endcode
+
+class Queue (BaseShare):
+
+    ## A counter used to give serial numbers to queues for diagnostic use.
+    ser_num = 0
+
+    ## Initialize a queue object to carry and buffer data between tasks.
+    #
+    #  This method sets up a queue by allocating memory for the contents and 
+    #  setting up the components in an empty configuration. 
+    #
+    #  Each queue can only carry data of one particular type which must be
+    #  chosen from the following list. The data type is specified by a 
+    #  one-letter type code which is given as for the Python @c array.array
+    #  type, which can be any of the following:
+    #  |      |      |      |
+    #  |:-----|:-----|:-----|
+    #  | **b** (signed char) | **B** (unsigned char) | 8 bit integers |
+    #  | **h** (signed short) | **H** (unsigned short) | 16 bit integers |
+    #  | **i** (signed int) | **I** (unsigned int) | 32 bit integers (probably) |
+    #  | **l** (signed long) | **L** (unsigned long) | 32 bit integers |
+    #  | **q** (signed long long) | **Q** (unsigned long long) | 64 bit integers |
+    #  | **f** (float) | **d** (double-precision float) | |
+    #
+    #  @param type_code The type of data items which the queue can hold
+    #  @param size The maximum number of items which the queue can hold
+    #  @param thread_protect @c True if mutual exclusion protection is used
+    #  @param overwrite If @c True, oldest data will be overwritten with new
+    #         data if the queue becomes full 
+    #  @param name A short name for the queue, default @c QueueN where @c N
+    #         is a serial number for the queue
+    def __init__ (self, type_code, size, thread_protect = False, 
+                overwrite = False, name = None):
+        # First call the parent class initializer
+        super ().__init__ (type_code, thread_protect, name)
+
+        self._size = size
+        self._overwrite = overwrite
+        self._name = str (name) if name != None \
+            else &#39;Queue&#39; + str (Queue.ser_num)
+        Queue.ser_num += 1
+
+        # Allocate memory in which the queue&#39;s data will be stored
+        try:
+            self._buffer = array.array (type_code, range (size))
+        except MemoryError:
+            self._buffer = None
+            raise
+        except ValueError:
+            self._buffer = None
+            raise
+
+        # Initialize pointers to be used for reading and writing data
+        self.clear ()
+
+        # Since we may have allocated a bunch of memory, call the garbage
+        # collector to neaten up what memory is left for future use
+        gc.collect ()
+
+
+    ## Put an item into the queue.
+    # 
+    #  If there isn&#39;t room for the item, wait (blocking the calling process)
+    #  until room becomes available, unless the @c overwrite constructor
+    #  parameter was set to @c True to allow old data to be clobbered. If
+    #  non-blocking behavior without overwriting is needed, one should call
+    #  @c full() to ensure that the queue is not full before putting data
+    #  into it:
+    #  @code
+    #     def some_task ():
+    #         # Setup
+    #         while True:
+    #             if not my_queue.full ():
+    #                 my_queue.put (create_something_to_put ())
+    #             yield 0
+    #  @endcode
+    #  @param item The item to be placed into the queue
+    #  @param in_ISR Set this to @c True if calling from within an ISR
+    @micropython.native
+    def put (self, item, in_ISR = False):
+        # If we&#39;re in an ISR and the queue is full and we&#39;re not allowed to
+        # overwrite data, we have to give up and exit
+        if self.full ():
+            if in_ISR:
+                return
+
+            # Wait (if needed) until there&#39;s room in the buffer for the data
+            if not self._overwrite:
+                while self.full ():
+                    pass
+
+        # Prevent data corruption by blocking interrupts during data transfer
+        if self._thread_protect and not in_ISR:
+            _irq_state = pyb.disable_irq ()
+
+        # Write the data and advance the counts and pointers
+        self._buffer[self._wr_idx] = item
+        self._wr_idx += 1
+        if self._wr_idx &gt;= self._size:
+            self._wr_idx = 0
+        self._num_items += 1
+        if self._num_items &gt;= self._size:        # Can&#39;t be fuller than full
+            self._num_items = self._size
+        if self._num_items &gt; self._max_full:     # Record maximum fillage
+            self._max_full = self._num_items
+
+        # Re-enable interrupts
+        if self._thread_protect and not in_ISR:
+            pyb.enable_irq (_irq_state)
+
+
+    ## Read an item from the queue.
+    # 
+    #  If there isn&#39;t anything in there, wait (blocking the calling process)
+    #  until something becomes available. If non-blocking reads are needed,
+    #  one should call @c any() to check for items before attempting to read
+    #  from the queue. This is usually done in a low priority task:
+    #  @code
+    #     def some_task ():
+    #         # Setup
+    #         while True:
+    #             if my_queue.any ():
+    #                 something = my_queue.get ()
+    #                 do_something_with (something)
+    #             # More loop stuff
+    #             yield 0
+    #  @endcode
+    #  @param in_ISR Set this to @c True if calling from within an ISR
+    @micropython.native
+    def get (self, in_ISR = False):
+        # Wait until there&#39;s something in the queue to be returned
+        while self.empty ():
+            pass
+
+        # Prevent data corruption by blocking interrupts during data transfer
+        if self._thread_protect and not in_ISR:
+            irq_state = pyb.disable_irq ()
+
+        # Get the item to be returned from the queue
+        to_return = self._buffer[self._rd_idx]
+
+        # Move the read pointer and adjust the number of items in the queue
+        self._rd_idx += 1
+        if self._rd_idx &gt;= self._size:
+            self._rd_idx = 0
+        self._num_items -= 1
+        if self._num_items &lt; 0:
+            self._num_items = 0
+
+        # Re-enable interrupts
+        if self._thread_protect and not in_ISR:
+            pyb.enable_irq (irq_state)
+
+        return (to_return)
+
+
+    ## Check if there are any items in the queue.
+    # 
+    #  Returns @c True if there are any items in the queue and @c False
+    #  if the queue is empty.
+    #  @return @c True if items are in the queue, @c False if not
+    @micropython.native
+    def any (self):
+        return (self._num_items &gt; 0)
+
+
+    ## Check if the queue is empty.
+    # 
+    #  Returns @c True if there are no items in the queue and @c False if 
+    #  there are any items therein.
+    #  @return @c True if queue is empty, @c False if it&#39;s not empty
+    @micropython.native
+    def empty (self):
+        return (self._num_items &lt;= 0)
+
+
+    ## Check if the queue is full.
+    # 
+    #  This method returns @c True if the queue is already full and there
+    #  is no room for more data without overwriting existing data. 
+    #  @return @c True if the queue is full
+    @micropython.native
+    def full (self):
+        return (self._num_items &gt;= self._size)
+
+
+    ## Check how many items are in the queue.
+    # 
+    #  This method returns the number of items which are currently in the 
+    #  queue.
+    #  @return The number of items in the queue
+    @micropython.native
+    def num_in (self):
+        return (self._num_items)
+
+
+    ## Remove all contents from the queue.
+    def clear (self):
+        self._rd_idx = 0
+        self._wr_idx = 0
+        self._num_items = 0
+        self._max_full = 0
+
+
+    ## This method puts diagnostic information about the queue into a string.
+    # 
+    #  It shows the queue&#39;s name and type as well as the maximum number of
+    #  items and queue size. 
+    def __repr__ (self):
+        return (&#39;{:&lt;12s} Queue&lt;{:s}&gt; Max Full {:d}/{:d}&#39;.format (self._name,
+                type_code_strings[self._type_code], self._max_full, self._size))
+
+# ============================================================================
+
+## An item which holds data to be shared between tasks.
+
+# This class implements a shared data item which can be protected against
+
+# data corruption by pre-emptive multithreading. Multithreading which can
+
+# corrupt shared data includes the use of ordinary interrupts as well as the
+
+# use of pre-emptive multithreading such as by a Real-Time Operating System
+
+# (RTOS).
+
+# 
+
+# An example of the creation and use of a share is as follows:
+
+# @code
+
+# import task_share
+
+# 
+
+# \# This share holds a signed short (16-bit) integer
+
+# my_share = task_share.Queue (&#39;h&#39;, name=&quot;My Share&quot;)
+
+# 
+
+# \# Somewhere in one task, put data into the share
+
+# my_share.put (some_data)
+
+# 
+
+# \# In another task, read data from the share
+
+# something = my_share.get ()
+
+# @endcode
+
+class Share (BaseShare):
+
+    ## A counter used to give serial numbers to shares for diagnostic use.
+    ser_num = 0
+
+
+    ## Create a shared data item used to transfer data between tasks.
+    # 
+    #  This method allocates memory in which the shared data will be buffered.
+    # 
+    #  Each share can only carry data of one particular type which must be
+    #  chosen from the following list. The data type is specified by a 
+    #  one-letter type code which is given as for the Python @c array.array
+    #  type, which can be any of the following:
+    #  |      |      |      |
+    #  |:-----|:-----|:-----|
+    #  | **b** (signed char) | **B** (unsigned char) | 8 bit integers |
+    #  | **h** (signed short) | **H** (unsigned short) | 16 bit integers |
+    #  | **i** (signed int) | **I** (unsigned int) | 32 bit integers (probably) |
+    #  | **l** (signed long) | **L** (unsigned long) | 32 bit integers |
+    #  | **q** (signed long long) | **Q** (unsigned long long) | 64 bit integers |
+    #  | **f** (float) | **d** (double-precision float) | |
+    # 
+    #  @param type_code The type of data items which the share can hold
+    #  @param thread_protect True if mutual exclusion protection is used
+    #  @param name A short name for the share, default @c ShareN where @c N
+    #         is a serial number for the share
+    def __init__ (self, type_code, thread_protect = True, name = None):
+        # First call the parent class initializer
+        super ().__init__ (type_code, thread_protect, name)
+
+        self._buffer = array.array (type_code, [0])
+
+        self._name = str (name) if name != None \
+            else &#39;Share&#39; + str (Share.ser_num)
+        Share.ser_num += 1
+
+
+    ## Write an item of data into the share.
+    # 
+    #  This method puts data into the share; any old data is overwritten.
+    #  This code disables interrupts during the writing so as to prevent
+    #  data corrupting by an interrupt service routine which might access
+    #  the same data.
+    #  @param data The data to be put into this share
+    #  @param in_ISR Set this to True if calling from within an ISR
+    @micropython.native
+    def put (self, data, in_ISR = False):
+
+        # Disable interrupts before writing the data
+        if self._thread_protect and not in_ISR:
+            irq_state = pyb.disable_irq ()
+
+        self._buffer[0] = data
+
+        # Re-enable interrupts
+        if self._thread_protect and not in_ISR:
+            pyb.enable_irq (irq_state)
+
+
+    ## Read an item of data from the share.
+    # 
+    #  If thread protection is enabled, interrupts are disabled during the time
+    #  that the data is being read so as to prevent data corruption by changes
+    #  in the data as it is being read. 
+    #  @param in_ISR Set this to True if calling from within an ISR
+    @micropython.native
+    def get (self, in_ISR = False):
+        # Disable interrupts before reading the data
+        if self._thread_protect and not in_ISR:
+            irq_state = pyb.disable_irq ()
+
+        to_return = self._buffer[0]
+
+        # Re-enable interrupts
+        if self._thread_protect and not in_ISR:
+            pyb.enable_irq (irq_state)
+
+        return (to_return)
+
+
+    ## Puts diagnostic information about the share into a string.
+    #
+    #  Shares are pretty simple, so we just put the name and type. 
+    def __repr__ (self):
+        return (&quot;{:&lt;12s} Share&lt;{:s}&gt;&quot;.format (self._name,
+                type_code_strings[self._type_code]))
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cotask.html" class="btn btn-neutral float-left" title="Cotask" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kai De La Cruz and Kenzie Goldman.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script> 
+
+</body>
+</html>

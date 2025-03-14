@@ -1,0 +1,43 @@
+# ME 405 Line-Following Robot 
+
+**by Kai De La Cruz and Kenzie Goldman**
+
+Welcome to our line-following robot project! 
+This project is a culmination of the skills we have learned in the 
+**ME 405 Mechatronics** course at Cal Poly. The goal of this project is to 
+create a robot that can complete an obstacle course using a variety of sensor 
+feedbacks for control. 
+
+<br>
+
+![Glamour shot](./image/Romi_glam1.jpg)
+
+```{toctree}
+:hidden:
+:caption: Project Contents
+:maxdepth: 1
+
+introduction.md
+requirements.md
+romi_design.md
+```
+
+```{toctree}
+:hidden:
+:caption: Software
+:maxdepth: 1
+software_overview.md
+controller_design.md
+```
+
+```{toctree}
+:hidden:
+:caption: Code
+:maxdepth: 1
+motor.md
+encoder.md
+collector.md
+controller.md
+IR_sensor.md
+imu.md
+```

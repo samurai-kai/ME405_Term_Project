@@ -1,0 +1,5 @@
+# Software Design
+
+task diagrams
+finite state machines
+block diagram algorithms

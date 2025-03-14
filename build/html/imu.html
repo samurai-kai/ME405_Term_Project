@@ -1,0 +1,263 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMU Driver &mdash; ME 405 Line-Following Robot 3/10/25 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dba797f5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="IR Sensor Driver" href="IR_sensor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ME 405 Line-Following Robot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="romi_design.html">Romi Design</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="software_overview.html">Software Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller_design.html">Controller Design</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="motor.html">Motor Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="encoder.html">Encoder Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collector.html">Collector Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller.html">Controller Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IR_sensor.html">IR Sensor Driver</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IMU Driver</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ME 405 Line-Following Robot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">IMU Driver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/imu.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="imu-driver">
+<h1>IMU Driver<a class="headerlink" href="#imu-driver" title="Link to this heading"></a></h1>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>BNO055 IMU driver 
+by Kai De La Cruz &amp; Kenzie Goldman 2/20/25
+
+import time from pyb import I2C import struct
+
+class BNO055: 
+    # Fusion mode values 
+    IMU_MODE = 0x08 
+    COMPASS_MODE = 0x09
+    M4G_MODE = 0x0A 
+    NDOF_MODE = 0x0C 
+    NDOF_FMC_OFF_MODE = 0x0B 
+    imu_address = 0x28 
+    config_mode = 0x00 
+
+    def __init__(self, i2c, address=imu_address, mode=config_mode): 
+        self.i2c = i2c 
+        self.address = address 
+
+    def set_mode(self, mode): 
+        &quot;&quot;&quot;Sets the operation mode of the BNO055.&quot;&quot;&quot;
+        self.i2c.mem_write(mode, self.address, 0x3D) 
+        time.sleep(0.02) # Delay to ensure the mode change is processed
+
+    def get_calibration_status(self): 
+        &quot;&quot;&quot;A method to retrieve the calibration status byte from the BNO055. 
+        Ref page 47 of the datasheet for address.&quot;&quot;&quot; 
+        data = self.i2c.mem_read(1, self.address, 0x35) 
+        return data[0]
+
+    def get_calibration_coefficients(self): 
+        &quot;&quot;&quot;A method to retrieve the calibration coefficients from the BNO055. 
+        Ref page 47 of the datasheet for address.&quot;&quot;&quot; 
+        data = self.i2c.mem_read(22, self.address, 0x55)
+        calibration_data = list(data) 
+        print(f&quot;Calibration data: {calibration_data}&quot;) 
+        return calibration_data 
+
+    def get_euler_angles(self):
+        &quot;&quot;&quot;A method to retrieve the Euler angles from the BNO055. 
+        Ref in-class notes for the register addresses.&quot;&quot;&quot;
+        buf = bytearray(6) 
+        data = self.i2c.mem_read(6, self.address, 0x1A) 
+        heading, roll, pitch = struct.unpack(&#39;\&lt;hhh&#39;, data)
+
+        return heading/16.0, roll/16.0, pitch/16.0
+
+    def get_ang_velocity(self): 
+        &quot;&quot;&quot;A method to retrieve the angular velocity
+        from the BNO055. Ref in-class notes for the register addresses.&quot;&quot;&quot; 
+        data = self.i2c.mem_read(2, self.address, 0x14) 
+        roll_rate = (data[1] &lt;&lt; 8 | data[0]) / 900.0 # x-dir 
+        pitch_rate = (data[3] &lt;&lt; 8 | data[2]) / 900.0 # y-dir 
+        yaw_rate = (data[5] &lt;&lt; 8 | data[4]) / 900.0 # z-dir 
+        return roll_rate, pitch_rate, yaw_rate
+
+    def read_calibration_data(self, file_path): 
+        &quot;&quot;&quot;Read calibration data from a text file.&quot;&quot;&quot; 
+        calibration_data = [] 
+        try: 
+            with open(file_path, &#39;r&#39;) as file: 
+                for line in file:
+                    calibration_data.append(int(line.strip())) 
+        except Exception as e:
+            print(f&quot;Error reading calibration data: {e}&quot;) 
+        return calibration_data
+
+    def write_calibration_data_to_imu(self, calibration_data): 
+        &quot;&quot;&quot;Write calibration data to the BNO055 IMU.&quot;&quot;&quot; 
+        if len(calibration_data) != 22:
+            raise ValueError(&quot;Invalid calibration data length&quot;)
+
+        # Write accelerometer offsets
+        self.write_register(0x55, calibration_data[0])
+        self.write_register(0x56, calibration_data[1])
+        self.write_register(0x57, calibration_data[2])
+        self.write_register(0x58, calibration_data[3])
+        self.write_register(0x59, calibration_data[4])
+        self.write_register(0x5A, calibration_data[5])
+
+        # Write magnetometer offsets
+        self.write_register(0x5B, calibration_data[6])
+        self.write_register(0x5C, calibration_data[7])
+        self.write_register(0x5D, calibration_data[8])
+        self.write_register(0x5E, calibration_data[9])
+        self.write_register(0x5F, calibration_data[10])
+        self.write_register(0x60, calibration_data[11])
+
+        # Write gyroscope offsets
+        self.write_register(0x61, calibration_data[12])
+        self.write_register(0x62, calibration_data[13])
+        self.write_register(0x63, calibration_data[14])
+        self.write_register(0x64, calibration_data[15])
+        self.write_register(0x65, calibration_data[16])
+        self.write_register(0x66, calibration_data[17])
+
+        # Write accelerometer radius
+        self.write_register(0x67, calibration_data[18])
+        self.write_register(0x68, calibration_data[19])
+
+        # Write magnetometer radius
+        self.write_register(0x69, calibration_data[20])
+        self.write_register(0x6A, calibration_data[21])
+
+    def write_register(self, register, value): 
+        &quot;&quot;&quot;Write a value to a specific register of the BNO055.&quot;&quot;&quot; 
+        self.i2c.mem_write(value,self.address, register)
+
+    def write_calibration_data(self, file_path, calibration_data): 
+        &quot;&quot;&quot;Write calibration data to a text file.&quot;&quot;&quot; 
+        with open(file_path, &#39;w&#39;) as file:
+            for value in calibration_data: 
+                file.write(f&quot;{value}\n&quot;)
+        print(f&quot;[IMU] Calibration data written to {file_path}.&quot;)
+
+    def load_calibration_data(self, file_path): 
+        &quot;&quot;&quot;Load calibration data from a text file.&quot;&quot;&quot; 
+        with open(file_path, &#39;r&#39;) as file: 
+            calibration_data = self.read_calibration_data(file_path) 
+            if len(calibration_data) == 22:
+                return calibration_data 
+            else: 
+                raise ValueError(&quot;Invalid calibration data length&quot;)
+
+    def reset(self): 
+        &quot;&quot;&quot;Resets the BNO055 IMU&quot;&quot;&quot; 
+        self.i2c.mem_write(0x20, self.address, 0x3F) # Reset command 
+        time.sleep(0.7) # Wait for reset
+        print(&quot;[IMU] Reset complete.&quot;)
+
+    def scan(self):  
+        &quot;&quot;&quot;Scan the I2C bus for connected devices and return their 
+        addresses.&quot;&quot;&quot; 
+        devices = self.i2c.scan() 
+        if devices: 
+            print(&quot;I2C device at addresse:&quot;, [hex(device) for device in devices]) 
+        else:
+            print(&quot;No I2C devices found.&quot;)
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="IR_sensor.html" class="btn btn-neutral float-left" title="IR Sensor Driver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kai De La Cruz and Kenzie Goldman.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script> 
+
+</body>
+</html>
